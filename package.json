@@ -1,7 +1,7 @@
 {
   "name": "@kadirgun/lucid-bravo",
   "description": "A powerful, fluent query builder for AdonisJS Lucid to handle filtering, sorting and pagination in a single flow",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -14,7 +14,16 @@
   "main": "build/index.js",
   "exports": {
     ".": "./build/index.js",
-    "./types": "./build/src/types.js"
+    "./types": "./build/src/types.js",
+    "./validators": "./build/validators.js",
+    "./commands": {
+      "import": "./build/commands/main.js",
+      "types": "./build/commands/main.d.ts"
+    },
+    "./commands/*": {
+      "import": "./build/commands/*.js",
+      "types": "./build/commands/*.d.ts"
+    }
   },
   "scripts": {
     "copy:templates": "copyfiles \"stubs/**/*.stub\" build",
