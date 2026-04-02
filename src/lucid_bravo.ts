@@ -1,11 +1,12 @@
-import type {
-  LucidModel,
-  ModelAttributes,
-  ModelQueryBuilderContract,
-} from '@adonisjs/lucid/types/model'
+import type { LucidModel, ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import stringHelpers from '@adonisjs/core/helpers/string'
-import type { BravoParams, BravoSortOption } from './types.ts'
+import type {
+  BravoParams,
+  BravoSortOption,
+  LucidBravoRelations,
+  LucidBravoAttributes,
+} from './types.ts'
 import { HttpContext } from '@adonisjs/core/http'
 import type { Constructor } from '@adonisjs/core/types/common'
 
@@ -55,14 +56,14 @@ export abstract class LucidBravo<T extends LucidModel> {
   /**
    * Return a whitelist of sortable columns
    */
-  public getSortable(): (keyof ModelAttributes<InstanceType<LucidModel>> | {})[] {
+  public getSortable(): LucidBravoAttributes<T>[] {
     return []
   }
 
   /**
    * Return a whitelist of allowed relations for preload include
    */
-  public getAllowedIncludes(): string[] {
+  public getAllowedIncludes(): LucidBravoRelations<InstanceType<T>>[] {
     return []
   }
 

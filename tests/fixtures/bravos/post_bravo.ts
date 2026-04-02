@@ -1,15 +1,18 @@
 import { LucidBravo } from '../../../src/lucid_bravo.ts'
 import Post from '../models/post.ts'
+import type { LucidBravoAttributes, LucidBravoRelations } from '../../../src/types.js'
 
-export default class PostBravo extends LucidBravo<typeof Post> {
+type ModelType = typeof Post
+
+export default class PostBravo extends LucidBravo<ModelType> {
   protected $model = Post
   protected defaultLimit = 2
 
-  public override getSortable(): string[] {
+  public override getSortable(): LucidBravoAttributes<ModelType>[] {
     return ['id', 'title']
   }
 
-  public override getAllowedIncludes(): string[] {
+  public override getAllowedIncludes(): LucidBravoRelations<Post>[] {
     return ['user']
   }
 }
