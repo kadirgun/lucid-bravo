@@ -1,0 +1,20 @@
+{{#var modelName = generators.modelName(entity.name)}}
+{{#var modelFileName = generators.modelFileName(entity.name)}}
+{{#var flowFileName = modelFileName.replace(/\.ts$/, '_flow.ts')}}
+{{#var modelImportPath = generators.importPath('#models', entity.path, modelFileName.replace(/\.ts$/, ''))}}
+{{{
+  exports({
+    to: app.makePath('app/flows', entity.path, flowFileName)
+  })
+}}}
+import { QueryFlow } from '@kadirgun/lucid-query-flow'
+import type {{ entity.name }} from '{{ modelImportPath }}'
+import type { ModelAttributes } from '@adonisjs/lucid/types/model'
+
+export default class {{ modelName }}QueryFlow extends QueryFlow<typeof {{ entity.name }}> {
+  public override getSortable(): string[] {
+    return []
+  }
+
+  protected defaultLimit = 20
+}

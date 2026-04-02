@@ -14,4 +14,10 @@
 
 import type Configure from '@adonisjs/core/commands/configure'
 
-export async function configure(_command: Configure) {}
+export async function configure(_command: Configure) {
+  const codemods = await _command.createCodemods()
+
+  await codemods.updateRcFile((rcFile) => {
+    rcFile.addCommand('@kadirgun/lucid-query-flow/commands')
+  })
+}
