@@ -1,17 +1,17 @@
 {{#var modelName = generators.modelName(entity.name)}}
 {{#var modelFileName = generators.modelFileName(entity.name)}}
-{{#var flowFileName = modelFileName.replace(/\.ts$/, '_flow.ts')}}
+{{#var bravoFileName = modelFileName.replace(/\.ts$/, '_bravo.ts')}}
 {{#var modelImportPath = generators.importPath('#models', entity.path, modelFileName.replace(/\.ts$/, ''))}}
 {{{
   exports({
-    to: app.makePath('app/flows', entity.path, flowFileName)
+    to: app.makePath('app/bravos', entity.path, bravoFileName)
   })
 }}}
-import { QueryFlow } from '@kadirgun/lucid-query-flow'
+import { LucidBravo } from '@kadirgun/lucid-bravo'
 import type {{ entity.name }} from '{{ modelImportPath }}'
 import type { ModelAttributes } from '@adonisjs/lucid/types/model'
 
-export default class {{ modelName }}QueryFlow extends QueryFlow<typeof {{ entity.name }}> {
+export default class {{ modelName }}Bravo extends LucidBravo<typeof {{ entity.name }}> {
   public override getSortable(): string[] {
     return []
   }

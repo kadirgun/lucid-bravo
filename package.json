@@ -1,5 +1,5 @@
 {
-  "name": "@kadirgun/lucid-query-flow",
+  "name": "@kadirgun/lucid-bravo",
   "description": "A powerful, fluent query builder for AdonisJS Lucid to handle filtering, sorting, pagination, and authorization in a single flow",
   "version": "0.0.1",
   "engines": {

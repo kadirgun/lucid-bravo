@@ -5,7 +5,7 @@ import type {
 } from '@adonisjs/lucid/types/model'
 
 import stringHelpers from '@adonisjs/core/helpers/string'
-import type { FlowParams, SortOption } from './types.ts'
+import type { BravoParams, BravoSortOption } from './types.ts'
 import { HttpContext } from '@adonisjs/core/http'
 import type { Authenticator } from '@adonisjs/auth'
 import type { GuardFactory } from '@adonisjs/auth/types'
@@ -16,21 +16,21 @@ declare module '@adonisjs/core/http' {
   }
 }
 
-export abstract class QueryFlow<T extends LucidModel> {
+export abstract class LucidBravo<T extends LucidModel> {
   protected $query: ModelQueryBuilderContract<T>
-  protected $params: FlowParams
+  protected $params: BravoParams
   protected $auth: Authenticator<Record<string, GuardFactory>>
 
   protected defaultLimit: number = 20
-  protected defaultSort: SortOption | null = null
+  protected defaultSort: BravoSortOption | null = null
 
-  constructor(query: ModelQueryBuilderContract<T>, params: FlowParams) {
+  constructor(query: ModelQueryBuilderContract<T>, params: BravoParams) {
     this.$query = query
     this.$params = params
 
     const ctx = HttpContext.getOrFail()
     if (!('auth' in ctx)) {
-      throw new Error('QueryFlow requires auth to be registered in the HttpContext')
+      throw new Error('LucidBravo requires auth to be registered in the HttpContext')
     }
 
     this.$auth = ctx.auth

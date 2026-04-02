@@ -1,11 +1,11 @@
 export type SortOrder = 'asc' | 'desc'
 
-export interface SortOption {
+export interface BravoSortOption {
   field: string
   order: SortOrder
 }
 
-export interface FlowParams {
+export interface BravoParams {
   page?: number
   limit?: number
   sort?: {
