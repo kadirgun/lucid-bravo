@@ -49,19 +49,48 @@ export default class UserBravo extends LucidBravo<typeof User> {
 }
 ```
 
-Use the class in a controller or service with the query builder and request params:
+You can create a Bravo instance in a few different ways, depending on whether you already have a Lucid query builder or want Bravo to create one from the model declared in the subclass:
 
 ```ts
-const bravo = new UserBravo(User.query(), {
-  sort: { field: 'name', order: 'asc' },
-  include: ['posts'],
+const bravoA = new UserBravo({
   limit: 20,
-  page: 1,
-  name: 'Alice',
 })
 
-const users = await bravo.apply()
-const result = await bravo.paginate()
+const bravoB = new UserBravo(
+  {
+    limit: 20,
+  },
+  User.query()
+)
+
+const bravoC = UserBravo.build(
+  {
+    limit: 20,
+  },
+  User.query()
+)
+
+// default query and params
+const bravoD = UserBravo.build()
+const bravoE = new UserBravo()
+```
+
+Use the class in a controller with `bravoValidator` to validate the common query params before passing them to Bravo:
+
+```ts
+import type { HttpContext } from '@adonisjs/core/http'
+import User from '#models/user'
+import UserBravo from '#bravos/user_bravo'
+import { bravoValidator } from '@kadirgun/lucid-bravo/validators'
+
+export default class UsersController {
+  public async index({ request }: HttpContext) {
+    const params = await request.validateUsing(bravoValidator)
+    const bravo = new UserBravo(params, User.query())
+
+    return bravo.paginate()
+  }
+}
 ```
 
 ## Query params
@@ -80,7 +109,8 @@ For example, `first_name` maps to a `firstName()` method.
 
 - `LucidBravo` expects to run inside an active HTTP context.
 - Only relations returned by `getAllowedIncludes()` are preloaded.
-- If you want request validation, create a Vine schema in your app that matches the same query shape.
+- For the common query shape, you can reuse `bravoValidator` from `@kadirgun/lucid-bravo/validators`.
+- If you also need model-specific filters, add a separate Vine schema in your app and merge the validated values before creating the Bravo instance.
 
 ## Authorization
 
