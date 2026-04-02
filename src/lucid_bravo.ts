@@ -7,33 +7,29 @@ import type {
 import stringHelpers from '@adonisjs/core/helpers/string'
 import type { BravoParams, BravoSortOption } from './types.ts'
 import { HttpContext } from '@adonisjs/core/http'
-import type { Authenticator } from '@adonisjs/auth'
-import type { GuardFactory } from '@adonisjs/auth/types'
-
-declare module '@adonisjs/core/http' {
-  export interface HttpContext {
-    auth: Authenticator<Record<string, GuardFactory>>
-  }
-}
 
 export abstract class LucidBravo<T extends LucidModel> {
   protected $query: ModelQueryBuilderContract<T>
   protected $params: BravoParams
-  protected $auth: Authenticator<Record<string, GuardFactory>>
+  protected $http: HttpContext
+  protected $countQuery: ModelQueryBuilderContract<T>
 
   protected defaultLimit: number = 20
   protected defaultSort: BravoSortOption | null = null
 
   constructor(query: ModelQueryBuilderContract<T>, params: BravoParams) {
     this.$query = query
+    this.$countQuery = query.clone()
     this.$params = params
+    this.$http = HttpContext.getOrFail()
+  }
 
-    const ctx = HttpContext.getOrFail()
-    if (!('auth' in ctx)) {
-      throw new Error('LucidBravo requires auth to be registered in the HttpContext')
-    }
-
-    this.$auth = ctx.auth
+  static build<T extends LucidModel, B extends LucidBravo<T>>(
+    this: { new (query: ModelQueryBuilderContract<T>, params: BravoParams): B },
+    query: ModelQueryBuilderContract<T>,
+    params: BravoParams
+  ): B {
+    return new this(query, params)
   }
 
   /**
@@ -67,14 +63,16 @@ export abstract class LucidBravo<T extends LucidModel> {
         continue
       }
 
-      // Convert snake_case to camelCase
       const methodName = stringHelpers.camelCase(key)
 
-      // Use reflect-metadata or simple check if method exists on this instance
-      const method = (this as any)[methodName]
-      if (typeof method === 'function') {
-        method.call(this, value)
+      if (!(methodName in this)) continue
+
+      const method = this[methodName as keyof this]
+      if (typeof method !== 'function') {
+        throw new Error(`Expected ${methodName} to be a method on ${this.constructor.name}`)
       }
+
+      await method.call(this, value)
     }
   }
 
