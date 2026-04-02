@@ -14,7 +14,8 @@ import {{ entity.name }} from '{{ modelImportPath }}'
 type ModelType = typeof {{ entity.name }}
 
 export default class {{ modelName }}Bravo extends LucidBravo<ModelType> {
-  protected $model = {{ entity.name }}
+  protected model = {{ entity.name }}
+  protected defaultLimit = 20
 
   public override getSortable(): LucidBravoAttributes<ModelType>[] {
     return ['id', 'title']
@@ -23,7 +24,5 @@ export default class {{ modelName }}Bravo extends LucidBravo<ModelType> {
   public override getAllowedIncludes(): LucidBravoRelations<{{ entity.name }}>[] {
     return ['user']
   }
-
-  protected defaultLimit = 20
 }
 

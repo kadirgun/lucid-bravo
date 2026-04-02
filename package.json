@@ -1,7 +1,8 @@
 {
   "name": "@kadirgun/lucid-bravo",
   "description": "A powerful, fluent query builder for AdonisJS Lucid to handle filtering, sorting and pagination in a single flow",
-  "version": "0.0.6",
+  "homepage": "https://github.com/kadirgun/lucid-bravo",
+  "version": "0.0.7",
   "engines": {
     "node": ">=24.0.0"
   },

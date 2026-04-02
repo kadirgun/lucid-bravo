@@ -11,7 +11,7 @@ import { HttpContext } from '@adonisjs/core/http'
 import type { Constructor } from '@adonisjs/core/types/common'
 
 export abstract class LucidBravo<T extends LucidModel> {
-  protected $model?: T
+  protected model?: T
   protected $query!: ModelQueryBuilderContract<T>
   protected $params: BravoParams
   protected $http: HttpContext
@@ -25,7 +25,7 @@ export abstract class LucidBravo<T extends LucidModel> {
     this.$http = HttpContext.getOrFail()
 
     if (query) {
-      this.$model = query.model
+      this.model = query.model
       this.$query = query
       this.$countQuery = this.$query.clone()
     }
@@ -44,8 +44,8 @@ export abstract class LucidBravo<T extends LucidModel> {
       return this.$query
     }
 
-    if (this.$model) {
-      this.$query = this.$model.query()
+    if (this.model) {
+      this.$query = this.model.query()
       this.$countQuery = this.$query.clone()
       return this.$query
     }

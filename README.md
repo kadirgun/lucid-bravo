@@ -21,30 +21,49 @@ This registers the package command so you can generate new Bravo classes with th
 ## Generate a Bravo class
 
 ```bash
-node ace make:bravo User
+node ace make:bravo Post
 ```
 
-The command creates a file like `app/bravos/user_bravo.ts` with a ready-to-edit class that extends `LucidBravo`.
+The command creates a file like `app/bravos/post_bravo.ts` with a ready-to-edit class that extends `LucidBravo`.
 
 ## Basic usage
 
 Create a Bravo class for each model and define the allowed sort fields, preload relations, and model-specific filters. The generated scaffold already includes the base-class import, so the example below shows only the parts you normally customize.
 
 ```ts
-export default class UserBravo extends LucidBravo<typeof User> {
-  protected defaultLimit = 20
-  protected defaultSort = { field: 'name', order: 'asc' as const }
+type ModelType = typeof Post
 
-  public override getSortable(): string[] {
-    return ['id', 'name']
+export default class PostBravo extends LucidBravo<ModelType> {
+  protected model = Post
+  protected defaultLimit = 10
+
+  public override getSortable(): LucidBravoAttributes<ModelType>[] {
+    return ['id', 'title']
   }
 
-  public override getAllowedIncludes(): string[] {
-    return ['posts']
+  public override getAllowedIncludes(): LucidBravoRelations<Post>[] {
+    return ['labels']
   }
 
-  public async name(value: string) {
-    this.$query.where('name', value)
+  public async title(value: string) {
+    this.$query.where('title', 'like', `%${value}%`)
+  }
+}
+```
+
+Use the class in a controller with `bravoValidator` to validate the common query params before passing them to Bravo:
+
+```ts
+import type { HttpContext } from '@adonisjs/core/http'
+import Post from '#models/post'
+import PostBravo from '#bravos/post_bravo'
+import { bravoValidator } from '@kadirgun/lucid-bravo/validators'
+
+export default class PostController {
+  public async index({ request }: HttpContext) {
+    const params = await request.validateUsing(bravoValidator)
+
+    return PostBravo.build(params).paginate()
   }
 }
 ```
@@ -52,45 +71,27 @@ export default class UserBravo extends LucidBravo<typeof User> {
 You can create a Bravo instance in a few different ways, depending on whether you already have a Lucid query builder or want Bravo to create one from the model declared in the subclass:
 
 ```ts
-const bravoA = new UserBravo({
+const bravoA = new PostBravo({
   limit: 20,
 })
 
-const bravoB = new UserBravo(
+const bravoB = new PostBravo(
   {
     limit: 20,
   },
-  User.query()
+  Post.query()
 )
 
-const bravoC = UserBravo.build(
+const bravoC = PostBravo.build(
   {
     limit: 20,
   },
-  User.query()
+  Post.query()
 )
 
 // default query and params
-const bravoD = UserBravo.build()
-const bravoE = new UserBravo()
-```
-
-Use the class in a controller with `bravoValidator` to validate the common query params before passing them to Bravo:
-
-```ts
-import type { HttpContext } from '@adonisjs/core/http'
-import User from '#models/user'
-import UserBravo from '#bravos/user_bravo'
-import { bravoValidator } from '@kadirgun/lucid-bravo/validators'
-
-export default class UsersController {
-  public async index({ request }: HttpContext) {
-    const params = await request.validateUsing(bravoValidator)
-    const bravo = new UserBravo(params, User.query())
-
-    return bravo.paginate()
-  }
-}
+const bravoD = PostBravo.build()
+const bravoE = new PostBravo()
 ```
 
 ## Query params
@@ -111,17 +112,6 @@ For example, `first_name` maps to a `firstName()` method.
 - Only relations returned by `getAllowedIncludes()` are preloaded.
 - For the common query shape, you can reuse `bravoValidator` from `@kadirgun/lucid-bravo/validators`.
 - If you also need model-specific filters, add a separate Vine schema in your app and merge the validated values before creating the Bravo instance.
-
-## Authorization
-
-If you need authorization inside a Bravo method or a controller that uses the same HTTP context, you can access Bouncer from `this.$http`:
-
-```ts
-const { bouncer } = this.$http
-
-await bouncer.authorize(viewPosts)
-await bouncer.with(PostsPolicy).authorize('viewAny')
-```
 
 ## License
 
