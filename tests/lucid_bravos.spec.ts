@@ -1,9 +1,9 @@
 import { test } from '@japa/runner'
 
-import Post from './fixtures/post.ts'
-import PostBravo from './fixtures/post_bravo.ts'
-import User from './fixtures/user.ts'
-import UserBravo from './fixtures/user_bravo.ts'
+import Post from './fixtures/models/post.ts'
+import PostBravo from './fixtures/bravos/post_bravo.ts'
+import User from './fixtures/models/user.ts'
+import UserBravo from './fixtures/bravos/user_bravo.ts'
 import { withLucidHarness } from './fixtures/lucid.ts'
 
 test.group('lucid bravos', () => {
@@ -53,6 +53,50 @@ test.group('lucid bravos', () => {
 
       assert.lengthOf(posts, 1)
       assert.equal(posts[0].title, 'Beta')
+    })
+  })
+
+  test('user bravo preloads allowed include posts', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      const user = await User.create({ name: 'Alice' })
+      await Post.createMany([
+        { title: 'Post A', userId: user.id },
+        { title: 'Post B', userId: user.id },
+      ])
+
+      const users = await withHttpContext(async () => {
+        const bravo = new UserBravo(User.query(), {
+          include: ['posts'],
+        })
+
+        return await bravo.apply()
+      })
+
+      assert.lengthOf(users, 1)
+      assert.isArray(users[0].posts)
+      assert.lengthOf(users[0].posts, 2)
+      assert.deepEqual(
+        users[0].posts.map((post) => post.title),
+        ['Post A', 'Post B']
+      )
+    })
+  })
+
+  test('user bravo skips not allowed include relation', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      const user = await User.create({ name: 'Bob' })
+      await Post.create({ title: 'Post X', userId: user.id })
+
+      const users = await withHttpContext(async () => {
+        const bravo = new UserBravo(User.query(), {
+          include: ['invalid_relation'],
+        })
+
+        return await bravo.apply()
+      })
+
+      assert.lengthOf(users, 1)
+      assert.isUndefined((users[0] as any).posts)
     })
   })
 

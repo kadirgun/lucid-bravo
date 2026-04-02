@@ -1,5 +1,5 @@
-import { LucidBravo } from '../../src/lucid_bravo.ts'
-import type User from './user.ts'
+import { LucidBravo } from '../../../src/lucid_bravo.ts'
+import type User from '../models/user.ts'
 
 export default class UserBravo extends LucidBravo<typeof User> {
   protected defaultLimit = 2
@@ -7,6 +7,10 @@ export default class UserBravo extends LucidBravo<typeof User> {
 
   public override getSortable(): string[] {
     return ['id', 'name']
+  }
+
+  public override getAllowedIncludes(): string[] {
+    return ['posts']
   }
 
   public async name(value: string) {

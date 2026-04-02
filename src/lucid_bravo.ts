@@ -40,10 +40,18 @@ export abstract class LucidBravo<T extends LucidModel> {
   }
 
   /**
-   * Main entry point to apply all filters, sorting and pagination
+   * Return a whitelist of allowed relations for preload include
+   */
+  public getAllowedIncludes(): string[] {
+    return []
+  }
+
+  /**
+   * Main entry point to apply all filters, includes, sorting and pagination
    */
   public async apply() {
     await this.applyFilters()
+    await this.applyIncludes()
     await this.applySorting()
     await this.applyPagination()
 
@@ -88,6 +96,27 @@ export abstract class LucidBravo<T extends LucidModel> {
       }
 
       await method.call(this, value)
+    }
+  }
+
+  /**
+   * Apply preload include relations based on allowlist
+   */
+  protected async applyIncludes() {
+    const includes = this.$params.include
+
+    if (!Array.isArray(includes) || includes.length === 0) {
+      return
+    }
+
+    const allowed = this.getAllowedIncludes()
+
+    for (const relation of includes) {
+      if (!allowed.includes(relation)) {
+        continue
+      }
+
+      void this.$query.preload(relation as any)
     }
   }
 
