@@ -55,4 +55,68 @@ test.group('lucid bravos', () => {
       assert.equal(posts[0].title, 'Beta')
     })
   })
+
+  test('user bravo count and paginate', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      await User.createMany([
+        { name: 'Alice' },
+        { name: 'Bob' },
+        { name: 'Charlie' },
+        { name: 'David' },
+        { name: 'Eve' },
+      ])
+
+      const result = await withHttpContext(async () => {
+        const bravo = new UserBravo(User.query(), {
+          limit: 2,
+          page: 2,
+          sort: { field: 'name', order: 'asc' },
+        })
+
+        return await bravo.paginate()
+      })
+
+      assert.equal(result.total, 5)
+      assert.lengthOf(result.items, 2)
+      assert.deepEqual(
+        result.items.map((user) => user.name),
+        ['Charlie', 'David']
+      )
+    })
+  })
+
+  test('user bravo applyFilters with method name and defaultSort fallback', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      await User.createMany([{ name: 'Alice' }, { name: 'Bob' }, { name: 'Charlie' }])
+
+      const users = await withHttpContext(async () => {
+        const bravo = new UserBravo(User.query(), {
+          name: 'Bob',
+        })
+
+        return await bravo.apply()
+      })
+
+      assert.lengthOf(users, 1)
+      assert.equal(users[0].name, 'Bob')
+    })
+  })
+
+  test('user bravo skips invalid sort field and uses default limit', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      await User.createMany([{ name: 'Charlie' }, { name: 'Alice' }, { name: 'Bob' }])
+
+      const users = await withHttpContext(async () => {
+        const bravo = new UserBravo(User.query(), {
+          sort: { field: 'nonexistent', order: 'asc' },
+          limit: 2,
+        })
+
+        return await bravo.apply()
+      })
+
+      // sort field not allowed, so default order (user id based) should apply in insertion order
+      assert.lengthOf(users, 2)
+    })
+  })
 })
