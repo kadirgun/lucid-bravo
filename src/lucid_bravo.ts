@@ -42,12 +42,27 @@ export abstract class LucidBravo<T extends LucidModel> {
   /**
    * Main entry point to apply all filters, sorting and pagination
    */
-  public async handle() {
+  public async apply() {
     await this.applyFilters()
     await this.applySorting()
     await this.applyPagination()
 
     return this.$query
+  }
+
+  public async count() {
+    const result = await this.$countQuery.count('* as total').firstOrFail()
+    return Number(result.$extras.total)
+  }
+
+  public async paginate() {
+    const items = await this.apply()
+    const total = await this.count()
+
+    return {
+      items,
+      total,
+    }
   }
 
   /**

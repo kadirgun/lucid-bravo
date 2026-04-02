@@ -20,7 +20,7 @@ test.group('lucid bravos', () => {
           limit: 2,
         })
 
-        return await bravo.handle()
+        return await bravo.apply()
       })
 
       assert.deepEqual(
@@ -48,7 +48,7 @@ test.group('lucid bravos', () => {
           limit: 1,
         })
 
-        return await bravo.handle()
+        return await bravo.apply()
       })
 
       assert.lengthOf(posts, 1)
