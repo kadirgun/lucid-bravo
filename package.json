@@ -2,7 +2,7 @@
   "name": "@kadirgun/lucid-bravo",
   "description": "A powerful, fluent query builder for AdonisJS Lucid to handle filtering, sorting and pagination in a single flow",
   "homepage": "https://github.com/kadirgun/lucid-bravo",
-  "version": "0.0.8",
+  "version": "0.1.0",
   "engines": {
     "node": ">=24.0.0"
   },
@@ -16,7 +16,14 @@
   "exports": {
     ".": "./build/index.js",
     "./types": "./build/src/types.js",
-    "./validators": "./build/validators.js",
+    "./validators": {
+      "types": "./build/validators/index.d.ts",
+      "import": "./build/validators/index.js"
+    },
+    "./validators/*": {
+      "types": "./build/validators/*.d.ts",
+      "import": "./build/validators/*.js"
+    },
     "./commands": {
       "import": "./build/commands/main.js",
       "types": "./build/commands/main.d.ts"
@@ -96,6 +103,7 @@
     "entry": [
       "./index.ts",
       "./configure.ts",
+      "./validators/index.ts",
       "./stubs/main.ts",
       "./commands/make_bravo.ts"
     ],
