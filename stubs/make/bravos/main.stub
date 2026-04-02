@@ -18,11 +18,11 @@ export default class {{ modelName }}Bravo extends LucidBravo<ModelType> {
   protected defaultLimit = 20
 
   public override getSortable(): LucidBravoAttributes<ModelType>[] {
-    return ['id', 'title']
+    return []
   }
 
   public override getAllowedIncludes(): LucidBravoRelations<{{ entity.name }}>[] {
-    return ['user']
+    return []
   }
 }
 
