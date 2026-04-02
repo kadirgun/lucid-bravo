@@ -12,13 +12,16 @@ test.group('lucid bravos', () => {
       await User.createMany([{ name: 'Charlie' }, { name: 'Alice' }, { name: 'Bob' }])
 
       const users = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
-          sort: {
-            field: 'name',
-            order: 'asc',
+        const bravo = new UserBravo(
+          {
+            sort: {
+              field: 'name',
+              order: 'asc',
+            },
+            limit: 2,
           },
-          limit: 2,
-        })
+          User.query()
+        )
 
         return await bravo.apply()
       })
@@ -39,14 +42,17 @@ test.group('lucid bravos', () => {
       ])
 
       const posts = await withHttpContext(async () => {
-        const bravo = new PostBravo(Post.query(), {
-          page: 2,
-          sort: {
-            field: 'title',
-            order: 'asc',
+        const bravo = new PostBravo(
+          {
+            page: 2,
+            sort: {
+              field: 'title',
+              order: 'asc',
+            },
+            limit: 1,
           },
-          limit: 1,
-        })
+          Post.query()
+        )
 
         return await bravo.apply()
       })
@@ -65,7 +71,7 @@ test.group('lucid bravos', () => {
       ])
 
       const users = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
+        const bravo = UserBravo.build({
           include: ['posts'],
         })
 
@@ -88,7 +94,7 @@ test.group('lucid bravos', () => {
       await Post.create({ title: 'Post X', userId: user.id })
 
       const users = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
+        const bravo = new UserBravo({
           include: ['invalid_relation'],
         })
 
@@ -111,7 +117,7 @@ test.group('lucid bravos', () => {
       ])
 
       const result = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
+        const bravo = new UserBravo({
           limit: 2,
           page: 2,
           sort: { field: 'name', order: 'asc' },
@@ -134,7 +140,7 @@ test.group('lucid bravos', () => {
       await User.createMany([{ name: 'Alice' }, { name: 'Bob' }, { name: 'Charlie' }])
 
       const users = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
+        const bravo = new UserBravo({
           name: 'Bob',
         })
 
@@ -151,7 +157,7 @@ test.group('lucid bravos', () => {
       await User.createMany([{ name: 'Charlie' }, { name: 'Alice' }, { name: 'Bob' }])
 
       const users = await withHttpContext(async () => {
-        const bravo = new UserBravo(User.query(), {
+        const bravo = new UserBravo({
           sort: { field: 'nonexistent', order: 'asc' },
           limit: 2,
         })

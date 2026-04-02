@@ -1,7 +1,8 @@
 import { LucidBravo } from '../../../src/lucid_bravo.ts'
-import type User from '../models/user.ts'
+import User from '../models/user.ts'
 
 export default class UserBravo extends LucidBravo<typeof User> {
+  protected $model = User
   protected defaultLimit = 2
   protected defaultSort = { field: 'name', order: 'asc' as const }
 

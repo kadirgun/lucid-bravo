@@ -8,10 +8,12 @@
   })
 }}}
 import { LucidBravo } from '@kadirgun/lucid-bravo'
-import type {{ entity.name }} from '{{ modelImportPath }}'
+import {{ entity.name }} from '{{ modelImportPath }}'
 import type { ModelAttributes } from '@adonisjs/lucid/types/model'
 
 export default class {{ modelName }}Bravo extends LucidBravo<typeof {{ entity.name }}> {
+  protected $model = {{ entity.name }}
+
   public override getSortable(): string[] {
     return []
   }
