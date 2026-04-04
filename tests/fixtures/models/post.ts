@@ -16,6 +16,9 @@ export default class Post extends BaseModel {
   declare category: string
 
   @column()
+  declare metadata: string | null
+
+  @column()
   declare userId: number | null
 
   @column.dateTime({

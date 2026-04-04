@@ -148,14 +148,18 @@ export abstract class LucidBravo<T extends LucidModel> {
   }
 
   private formatDimension(dimension: string) {
-    const [field, period] = dimension.split(':')
-    const alias = period ? `${field}_${period}` : field
+    const separatorIndex = dimension.lastIndexOf(':')
+    const field = separatorIndex === -1 ? dimension : dimension.slice(0, separatorIndex)
+    const period = separatorIndex === -1 ? undefined : dimension.slice(separatorIndex + 1)
+
+    const { expression, rawExpression } = this.getDimensionExpression(field)
+    const alias = this.buildDimensionAlias(field, period)
 
     if (!period) {
       return {
-        expression: field,
+        expression,
         alias,
-        rawExpression: false,
+        rawExpression,
       }
     }
 
@@ -165,58 +169,121 @@ export abstract class LucidBravo<T extends LucidModel> {
     }
 
     return {
-      expression: this.getDateDimensionExpression(field, period),
+      expression: this.getDateDimensionExpression(expression, period),
       alias,
       rawExpression: true,
     }
   }
 
-  private getDateDimensionExpression(field: string, period: string) {
+  private buildDimensionAlias(field: string, period?: string) {
+    const normalizedField =
+      field.replace(/[^a-zA-Z0-9_]+/g, '_').replace(/^_+|_+$/g, '') || 'dimension'
+
+    if (!period) {
+      return normalizedField
+    }
+
+    return `${normalizedField}_${period}`
+  }
+
+  private getDimensionExpression(field: string) {
+    if (!field.includes('->')) {
+      return {
+        expression: field,
+        rawExpression: false,
+      }
+    }
+
+    const pathSegments = field
+      .split('->')
+      .map((segment) => segment.trim())
+      .filter(Boolean)
+
+    if (pathSegments.length < 2) {
+      throw new Error(`Invalid JSON dimension format: ${field}`)
+    }
+
+    const baseField = pathSegments.shift() as string
+    this.validateJsonPathSegments(pathSegments)
+
+    const dialect = this.getDialect()
+
+    if (dialect.includes('pg') || dialect.includes('postgres')) {
+      let expression = baseField
+
+      pathSegments.forEach((segment, index) => {
+        const operator = index === pathSegments.length - 1 ? '->>' : '->'
+        expression = `${expression}${operator}'${segment}'`
+      })
+
+      return {
+        expression,
+        rawExpression: true,
+      }
+    }
+
+    const jsonPath = pathSegments.join('.')
+
+    return {
+      expression: `json_extract(${baseField}, '$.${jsonPath}')`,
+      rawExpression: true,
+    }
+  }
+
+  private validateJsonPathSegments(pathSegments: string[]) {
+    for (const segment of pathSegments) {
+      if (!/^[a-zA-Z0-9_]+$/.test(segment)) {
+        throw new Error(`Invalid JSON path segment: ${segment}`)
+      }
+    }
+  }
+
+  private getDateDimensionExpression(expression: string, period: string) {
     const dialect = this.getDialect()
 
     if (dialect.includes('sqlite')) {
-      return this.getSqliteDateExpression(field, period)
+      return this.getSqliteDateExpression(expression, period)
     }
 
     if (dialect.includes('mysql')) {
-      return this.getMysqlDateExpression(field, period)
+      return this.getMysqlDateExpression(expression, period)
     }
 
     if (dialect.includes('pg') || dialect.includes('postgres')) {
-      return this.getPostgresDateExpression(field, period)
+      return this.getPostgresDateExpression(expression, period)
     }
 
-    return `date_trunc('${period}', ${field})`
+    return `date_trunc('${period}', (${expression})::timestamp)`
   }
 
-  private getSqliteDateExpression(field: string, period: string) {
+  private getSqliteDateExpression(expression: string, period: string) {
     const formats: Record<string, string> = {
       hour: '%Y-%m-%d %H:00',
       day: '%Y-%m-%d',
       month: '%Y-%m',
     }
 
-    return `strftime('${formats[period]}', ${field})`
+    return `strftime('${formats[period]}', ${expression})`
   }
 
-  private getMysqlDateExpression(field: string, period: string) {
+  private getMysqlDateExpression(expression: string, period: string) {
     const formats: Record<string, string> = {
       hour: '%Y-%m-%d %H:00',
       day: '%Y-%m-%d',
       month: '%Y-%m',
     }
 
-    return `date_format(${field}, '${formats[period]}')`
+    return `date_format(${expression}, '${formats[period]}')`
   }
 
-  private getPostgresDateExpression(field: string, period: string) {
+  private getPostgresDateExpression(expression: string, period: string) {
     const formats: Record<string, string> = {
       hour: 'YYYY-MM-DD HH24:00',
       day: 'YYYY-MM-DD',
       month: 'YYYY-MM',
     }
 
-    return `to_char(date_trunc('${period}', ${field}), '${formats[period]}')`
+    return `to_char(date_trunc('${period}', (${expression})::timestamp), '${formats[period]}')`
   }
 
   private getDialect() {

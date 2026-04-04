@@ -254,4 +254,54 @@ test.group('lucid bravos', () => {
       )
     })
   })
+
+  test('post bravo aggregate groups by json dimensions', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      const user1 = await User.create({ name: 'Alice' })
+
+      await Post.createMany([
+        {
+          title: 'Post 1',
+          userId: user1.id,
+          category: 'Tech',
+          metadata: JSON.stringify({ topic: 'adonis' }),
+          views: 10,
+        },
+        {
+          title: 'Post 2',
+          userId: user1.id,
+          category: 'Tech',
+          metadata: JSON.stringify({ topic: 'adonis' }),
+          views: 20,
+        },
+        {
+          title: 'Post 3',
+          userId: user1.id,
+          category: 'Health',
+          metadata: JSON.stringify({ topic: 'lucid' }),
+          views: 30,
+        },
+      ])
+
+      const results = await withHttpContext(async () => {
+        const bravo = new PostBravo({
+          dimensions: ['metadata->topic'],
+          metrics: ['count'],
+        })
+
+        return await bravo.aggregate()
+      })
+
+      assert.lengthOf(results, 2)
+      assert.deepEqual(
+        results
+          .map((row) => ({ topic: row.metadata_topic, total: Number(row.total) }))
+          .sort((left, right) => String(left.topic).localeCompare(String(right.topic))),
+        [
+          { topic: 'adonis', total: 2 },
+          { topic: 'lucid', total: 1 },
+        ]
+      )
+    })
+  })
 })
