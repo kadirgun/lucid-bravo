@@ -16,8 +16,8 @@ export interface BravoParams {
     order?: SortOrder
   }
   include?: string[]
-  dimensions?: string[]
-  metrics?: string[]
+  dimensions?: string | string[]
+  metrics?: string | string[]
   [key: string]: any
 }
 

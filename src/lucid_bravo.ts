@@ -98,8 +98,19 @@ export abstract class LucidBravo<T extends LucidModel> {
   public async aggregate() {
     await this.applyFilters()
 
-    const dimensions = this.$params.dimensions || []
-    const metrics = this.$params.metrics || []
+    const dimensions: string[] = []
+    if (Array.isArray(this.$params.dimensions)) {
+      dimensions.push(...this.$params.dimensions)
+    } else if (typeof this.$params.dimensions === 'string') {
+      dimensions.push(this.$params.dimensions)
+    }
+
+    const metrics: string[] = []
+    if (Array.isArray(this.$params.metrics)) {
+      metrics.push(...this.$params.metrics)
+    } else if (typeof this.$params.metrics === 'string') {
+      metrics.push(this.$params.metrics)
+    }
 
     if (dimensions.length === 0 || metrics.length === 0) {
       throw new Error('Dimensions and metrics are required for aggregation')
