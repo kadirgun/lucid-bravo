@@ -1,6 +1,6 @@
 import { mkdtemp } from 'node:fs/promises'
-import { join } from 'node:path'
 import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 
 import { IgnitorFactory } from '@adonisjs/core/factories'
 import { HttpContext } from '@adonisjs/core/http'
@@ -94,6 +94,8 @@ export default defineConfig({
     table.increments('id')
     table.string('title').notNullable()
     table.integer('user_id').nullable()
+    table.integer('views').notNullable().defaultTo(0)
+    table.string('category').notNullable().defaultTo('uncategorized')
   })
 
   return {

@@ -169,4 +169,39 @@ test.group('lucid bravos', () => {
       assert.lengthOf(users, 2)
     })
   })
+
+  test('post bravo aggregate with dimensions and metrics', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      const user1 = await User.create({ name: 'Alice' })
+
+      const posts = []
+      const categories = ['Tech', 'Health']
+
+      for (let i = 0; i < 5; i++) {
+        posts.push({
+          title: `Post ${i + 1}`,
+          userId: user1.id,
+          category: categories[i % categories.length],
+          views: (i + 1) * 10,
+        })
+      }
+
+      await Post.createMany(posts)
+
+      const results = await withHttpContext(async () => {
+        const bravo = new PostBravo({
+          dimensions: ['category'],
+          metrics: ['count', 'avg:views'],
+        })
+
+        return await bravo.aggregate()
+      })
+
+      assert.lengthOf(results, 2)
+
+      results.forEach((result) => {
+        assert.equal(result.avg_views, 30)
+      })
+    })
+  })
 })

@@ -95,6 +95,36 @@ export abstract class LucidBravo<T extends LucidModel> {
     }
   }
 
+  public async aggregate() {
+    await this.applyFilters()
+
+    const dimensions = this.$params.dimensions || []
+    const metrics = this.$params.metrics || []
+
+    if (dimensions.length === 0 || metrics.length === 0) {
+      throw new Error('Dimensions and metrics are required for aggregation')
+    }
+
+    // Apply group by for dimensions
+    dimensions.forEach((dimension) => {
+      void this.$query.select(dimension).groupBy(dimension)
+    })
+
+    metrics.forEach((metric) => {
+      if (metric === 'count') {
+        return this.$query.count('* as total')
+      }
+
+      const [func, field] = metric.split(':')
+      const alias = `${func}_${field}`
+      void this.$query.select(this.$query.client.raw(`${func}(${field}) as ${alias}`))
+    })
+
+    const results = await this.$query.pojo()
+
+    return results as Array<Record<string, string | number>>
+  }
+
   /**
    * Automatically call methods that match camelCase version of snake_case params
    */
