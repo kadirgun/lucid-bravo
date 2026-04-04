@@ -1,10 +1,10 @@
 import { test } from '@japa/runner'
 
-import Post from './fixtures/models/post.ts'
 import PostBravo from './fixtures/bravos/post_bravo.ts'
-import User from './fixtures/models/user.ts'
 import UserBravo from './fixtures/bravos/user_bravo.ts'
 import { withLucidHarness } from './fixtures/lucid.ts'
+import Post from './fixtures/models/post.ts'
+import User from './fixtures/models/user.ts'
 
 test.group('lucid bravos', () => {
   test('user bravo sorts and paginates users', async ({ assert }) => {

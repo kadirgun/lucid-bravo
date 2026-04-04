@@ -36,10 +36,10 @@ export abstract class LucidBravo<T extends LucidModel> {
     this.$countQuery = this.$query.clone()
   }
 
-  static build<T extends LucidModel, B extends LucidBravo<T>>(
+  static build<B>(
     this: Constructor<B>,
     params?: BravoParams,
-    query?: ModelQueryBuilderContract<T>
+    query?: ModelQueryBuilderContract<LucidModel>
   ): B {
     return new this(params, query)
   }
@@ -61,11 +61,6 @@ export abstract class LucidBravo<T extends LucidModel> {
   protected getModel(): T {
     if (this.model) return this.model
     throw new Error('Model not defined')
-  }
-
-  // @ts-ignore
-  protected transform(items: InstanceType<T>[]) {
-    return items
   }
 
   /**
@@ -94,7 +89,7 @@ export abstract class LucidBravo<T extends LucidModel> {
     const filtered = await this.count(this.$filteredQuery)
 
     return {
-      items: this.transform(items),
+      items,
       total,
       filtered,
     }

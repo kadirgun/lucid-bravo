@@ -8,7 +8,7 @@ export default class UserBravo extends LucidBravo<ModelType> {
   protected defaultLimit = 2
   protected defaultSort = { field: 'name', order: 'asc' as const }
 
-  protected getModel(): ModelType {
+  protected override getModel(): ModelType {
     return User
   }
 
