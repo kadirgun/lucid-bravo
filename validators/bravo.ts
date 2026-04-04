@@ -10,6 +10,8 @@ export const bravoSchema = {
   limit: vine.number().positive().max(100).optional(),
   page: vine.number().positive().optional(),
   include: vine.array(vine.string()).optional(),
+  dimensions: vine.array(vine.string()).optional(),
+  metrics: vine.array(vine.string()).optional(),
 }
 
 export const bravoValidator = vine.create(bravoSchema)
