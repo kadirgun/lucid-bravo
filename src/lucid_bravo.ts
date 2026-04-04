@@ -63,6 +63,11 @@ export abstract class LucidBravo<T extends LucidModel> {
     throw new Error('Model not defined')
   }
 
+  // @ts-ignore
+  protected transform(items: InstanceType<T>[]) {
+    return items
+  }
+
   /**
    * Main entry point to apply all filters, includes, sorting and pagination
    */
@@ -89,7 +94,7 @@ export abstract class LucidBravo<T extends LucidModel> {
     const filtered = await this.count(this.$filteredQuery)
 
     return {
-      items,
+      items: this.transform(items),
       total,
       filtered,
     }
