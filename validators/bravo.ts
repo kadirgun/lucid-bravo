@@ -10,8 +10,18 @@ export const bravoSchema = {
   limit: vine.number().positive().max(100).optional(),
   page: vine.number().positive().optional(),
   include: vine.array(vine.string()).optional(),
-  dimensions: vine.array(vine.string()).optional(),
-  metrics: vine.array(vine.string()).optional(),
+  dimensions: vine
+    .union([
+      vine.union.if((val) => typeof val === 'string', vine.string()),
+      vine.union.if((val) => Array.isArray(val), vine.array(vine.string())),
+    ])
+    .optional(),
+  metrics: vine
+    .union([
+      vine.union.if((val) => typeof val === 'string', vine.string()),
+      vine.union.if((val) => Array.isArray(val), vine.array(vine.string())),
+    ])
+    .optional(),
 }
 
 export const bravoValidator = vine.create(bravoSchema)
