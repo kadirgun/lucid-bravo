@@ -18,6 +18,12 @@ export default class Post extends BaseModel {
   @column()
   declare userId: number | null
 
+  @column.dateTime({
+    columnName: 'created_at',
+    autoCreate: true,
+  })
+  declare createdAt: any
+
   @belongsTo(() => User)
   declare public user: BelongsTo<typeof User>
 }

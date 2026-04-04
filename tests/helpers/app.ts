@@ -96,6 +96,7 @@ export default defineConfig({
     table.integer('user_id').nullable()
     table.integer('views').notNullable().defaultTo(0)
     table.string('category').notNullable().defaultTo('uncategorized')
+    table.datetime('created_at').notNullable().defaultTo(database.raw('CURRENT_TIMESTAMP'))
   })
 
   return {

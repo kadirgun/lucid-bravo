@@ -105,17 +105,28 @@ export abstract class LucidBravo<T extends LucidModel> {
       throw new Error('Dimensions and metrics are required for aggregation')
     }
 
-    // Apply group by for dimensions
     dimensions.forEach((dimension) => {
-      void this.$query.select(dimension).groupBy(dimension)
+      const { expression, alias, rawExpression } = this.formatDimension(dimension)
+
+      void this.$query.select(this.$query.client.raw(`${expression} as ${alias}`))
+
+      if (rawExpression) {
+        void this.$query.groupByRaw(expression)
+      } else {
+        void this.$query.groupBy(expression)
+      }
     })
 
     metrics.forEach((metric) => {
       if (metric === 'count') {
-        return this.$query.count('* as total')
+        return void this.$query.count('* as total')
       }
 
       const [func, field] = metric.split(':')
+      if (!func || !field) {
+        throw new Error(`Invalid metric format: ${metric}`)
+      }
+
       const alias = `${func}_${field}`
       void this.$query.select(this.$query.client.raw(`${func}(${field}) as ${alias}`))
     })
@@ -123,6 +134,106 @@ export abstract class LucidBravo<T extends LucidModel> {
     const results = await this.$query.pojo()
 
     return results as Array<Record<string, string | number>>
+  }
+
+  private formatDimension(dimension: string) {
+    const [field, period] = dimension.split(':')
+    const alias = period ? `${field}_${period}` : field
+
+    if (!period) {
+      return {
+        expression: field,
+        alias,
+        rawExpression: false,
+      }
+    }
+
+    const allowedPeriods = ['hour', 'day', 'month']
+    if (!allowedPeriods.includes(period)) {
+      throw new Error(`Unsupported dimension period: ${period}`)
+    }
+
+    return {
+      expression: this.getDateDimensionExpression(field, period),
+      alias,
+      rawExpression: true,
+    }
+  }
+
+  private getDateDimensionExpression(field: string, period: string) {
+    const dialect = this.getDialect()
+
+    if (dialect.includes('sqlite')) {
+      return this.getSqliteDateExpression(field, period)
+    }
+
+    if (dialect.includes('mysql')) {
+      return this.getMysqlDateExpression(field, period)
+    }
+
+    if (dialect.includes('pg') || dialect.includes('postgres')) {
+      return this.getPostgresDateExpression(field, period)
+    }
+
+    return `date_trunc('${period}', ${field})`
+  }
+
+  private getSqliteDateExpression(field: string, period: string) {
+    const formats: Record<string, string> = {
+      hour: '%Y-%m-%d %H:00',
+      day: '%Y-%m-%d',
+      month: '%Y-%m',
+    }
+
+    return `strftime('${formats[period]}', ${field})`
+  }
+
+  private getMysqlDateExpression(field: string, period: string) {
+    const formats: Record<string, string> = {
+      hour: '%Y-%m-%d %H:00',
+      day: '%Y-%m-%d',
+      month: '%Y-%m',
+    }
+
+    return `date_format(${field}, '${formats[period]}')`
+  }
+
+  private getPostgresDateExpression(field: string, period: string) {
+    const formats: Record<string, string> = {
+      hour: 'YYYY-MM-DD HH24:00',
+      day: 'YYYY-MM-DD',
+      month: 'YYYY-MM',
+    }
+
+    return `to_char(date_trunc('${period}', ${field}), '${formats[period]}')`
+  }
+
+  private getDialect() {
+    const client: any = this.$query.client
+    const configClient = client?.config?.client
+    if (configClient) {
+      return String(configClient).toLowerCase()
+    }
+
+    const dialect = client?.dialect
+    if (typeof dialect === 'string') {
+      return String(dialect).toLowerCase()
+    }
+
+    if (typeof dialect === 'object' && dialect?.config?.client) {
+      return String(dialect.config.client).toLowerCase()
+    }
+
+    if (typeof dialect === 'object' && dialect?.name) {
+      return String(dialect.name).toLowerCase()
+    }
+
+    const constructorName = client?.constructor?.name
+    if (constructorName) {
+      return String(constructorName).toLowerCase()
+    }
+
+    return ''
   }
 
   /**

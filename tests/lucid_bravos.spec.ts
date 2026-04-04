@@ -204,4 +204,54 @@ test.group('lucid bravos', () => {
       })
     })
   })
+
+  test('post bravo aggregate formats created_at by day', async ({ assert }) => {
+    await withLucidHarness(async ({ withHttpContext }) => {
+      const { DateTime } = await import('luxon')
+      const user1 = await User.create({ name: 'Alice' })
+
+      await Post.createMany([
+        {
+          title: 'Post 1',
+          userId: user1.id,
+          category: 'Tech',
+          views: 10,
+          createdAt: DateTime.fromJSDate(new Date('2024-01-01T10:15:00Z')),
+        },
+        {
+          title: 'Post 2',
+          userId: user1.id,
+          category: 'Tech',
+          views: 20,
+          createdAt: DateTime.fromJSDate(new Date('2024-01-01T11:45:00Z')),
+        },
+        {
+          title: 'Post 3',
+          userId: user1.id,
+          category: 'Health',
+          views: 30,
+          createdAt: DateTime.fromJSDate(new Date('2024-01-02T09:00:00Z')),
+        },
+      ])
+
+      const results = await withHttpContext(async () => {
+        const bravo = new PostBravo({
+          dimensions: ['created_at:day'],
+          metrics: ['count'],
+        })
+
+        return await bravo.aggregate()
+      })
+
+      assert.lengthOf(results, 2)
+      assert.deepEqual(results.map((row) => row.created_at_day).sort(), [
+        '2024-01-01',
+        '2024-01-02',
+      ])
+      assert.deepEqual(
+        results.map((row) => Number(row.total)).sort((a, b) => a - b),
+        [1, 2]
+      )
+    })
+  })
 })
