@@ -5,19 +5,22 @@ import User from '../models/user.ts'
 type ModelType = typeof User
 
 export default class UserBravo extends LucidBravo<ModelType> {
-  protected model = User
   protected defaultLimit = 2
   protected defaultSort = { field: 'name', order: 'asc' as const }
 
-  public override getSortable(): LucidBravoAttributes<ModelType>[] {
+  protected getModel(): ModelType {
+    return User
+  }
+
+  protected override getSortable(): LucidBravoAttributes<ModelType>[] {
     return ['id', 'name']
   }
 
-  public override getAllowedIncludes(): LucidBravoRelations<User>[] {
+  protected override getAllowedIncludes(): LucidBravoRelations<User>[] {
     return ['posts']
   }
 
-  public async name(value: string) {
+  protected async name(value: string) {
     this.$query.where('name', value)
   }
 }

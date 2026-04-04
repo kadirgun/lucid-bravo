@@ -37,15 +37,15 @@ export default class PostBravo extends LucidBravo<ModelType> {
   protected model = Post
   protected defaultLimit = 10
 
-  public override getSortable(): LucidBravoAttributes<ModelType>[] {
+  protected override getSortable(): LucidBravoAttributes<ModelType>[] {
     return ['id', 'title']
   }
 
-  public override getAllowedIncludes(): LucidBravoRelations<Post>[] {
+  protected override getAllowedIncludes(): LucidBravoRelations<Post>[] {
     return ['labels']
   }
 
-  public async title(value: string) {
+  protected async title(value: string) {
     this.$query.where('title', 'like', `%${value}%`)
   }
 }

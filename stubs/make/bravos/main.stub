@@ -14,14 +14,17 @@ import {{ entity.name }} from '{{ modelImportPath }}'
 type ModelType = typeof {{ entity.name }}
 
 export default class {{ modelName }}Bravo extends LucidBravo<ModelType> {
-  protected model = {{ entity.name }}
   protected defaultLimit = 20
 
-  public override getSortable(): LucidBravoAttributes<ModelType>[] {
+  protected getModel(): ModelType {
+    return {{ modelName }}
+  }
+
+  protected override getSortable(): LucidBravoAttributes<ModelType>[] {
     return []
   }
 
-  public override getAllowedIncludes(): LucidBravoRelations<{{ entity.name }}>[] {
+  protected override getAllowedIncludes(): LucidBravoRelations<{{ entity.name }}>[] {
     return []
   }
 }

@@ -1,21 +1,23 @@
 import type { LucidModel, ModelQueryBuilderContract } from '@adonisjs/lucid/types/model'
 
 import stringHelpers from '@adonisjs/core/helpers/string'
+import { HttpContext } from '@adonisjs/core/http'
+import type { Constructor } from '@adonisjs/core/types/common'
 import type {
   BravoParams,
   BravoSortOption,
-  LucidBravoRelations,
   LucidBravoAttributes,
+  LucidBravoRelations,
 } from './types.ts'
-import { HttpContext } from '@adonisjs/core/http'
-import type { Constructor } from '@adonisjs/core/types/common'
 
 export abstract class LucidBravo<T extends LucidModel> {
-  protected model?: T
+  private model: T
   protected $query!: ModelQueryBuilderContract<T>
   protected $params: BravoParams
   protected $http: HttpContext
   protected $countQuery!: ModelQueryBuilderContract<T>
+  protected $filteredQuery!: ModelQueryBuilderContract<T>
+  private applied = false
 
   protected defaultLimit: number = 20
   protected defaultSort: BravoSortOption | null = null
@@ -25,10 +27,13 @@ export abstract class LucidBravo<T extends LucidModel> {
     this.$http = HttpContext.getOrFail()
 
     if (query) {
-      this.model = query.model
       this.$query = query
-      this.$countQuery = this.$query.clone()
+    } else {
+      this.$query = this.getModel().query()
     }
+
+    this.model = this.$query.model
+    this.$countQuery = this.$query.clone()
   }
 
   static build<T extends LucidModel, B extends LucidBravo<T>>(
@@ -39,61 +44,54 @@ export abstract class LucidBravo<T extends LucidModel> {
     return new this(params, query)
   }
 
-  protected resolveQuery() {
-    if (this.$query) {
-      return this.$query
-    }
-
-    if (this.model) {
-      this.$query = this.model.query()
-      this.$countQuery = this.$query.clone()
-      return this.$query
-    }
-
-    throw new Error('Either a query must be provided or $model must be set in the subclass')
-  }
-
   /**
    * Return a whitelist of sortable columns
    */
-  public getSortable(): LucidBravoAttributes<T>[] {
+  protected getSortable(): LucidBravoAttributes<T>[] {
     return []
   }
 
   /**
    * Return a whitelist of allowed relations for preload include
    */
-  public getAllowedIncludes(): LucidBravoRelations<InstanceType<T>>[] {
+  protected getAllowedIncludes(): LucidBravoRelations<InstanceType<T>>[] {
     return []
+  }
+
+  protected getModel(): T {
+    if (this.model) return this.model
+    throw new Error('Model not defined')
   }
 
   /**
    * Main entry point to apply all filters, includes, sorting and pagination
    */
   public async apply() {
-    this.resolveQuery()
+    if (this.applied) return this.$query
     await this.applyFilters()
     await this.applyIncludes()
     await this.applySorting()
     await this.applyPagination()
 
+    this.applied = true
+
     return this.$query
   }
 
-  public async count() {
-    this.resolveQuery()
-
-    const result = await this.$countQuery.count('* as total').firstOrFail()
+  private async count(query: ModelQueryBuilderContract<T>): Promise<number> {
+    const result = await query.count('* as total').firstOrFail()
     return Number(result.$extras.total)
   }
 
   public async paginate() {
     const items = await this.apply()
-    const total = await this.count()
+    const total = await this.count(this.$countQuery)
+    const filtered = await this.count(this.$filteredQuery)
 
     return {
       items,
       total,
+      filtered,
     }
   }
 
@@ -101,8 +99,6 @@ export abstract class LucidBravo<T extends LucidModel> {
    * Automatically call methods that match camelCase version of snake_case params
    */
   protected async applyFilters() {
-    this.resolveQuery()
-
     for (const [key, value] of Object.entries(this.$params)) {
       if (['page', 'limit', 'sort'].includes(key)) {
         continue
@@ -123,13 +119,14 @@ export abstract class LucidBravo<T extends LucidModel> {
 
       await method.call(this, value)
     }
+
+    this.$filteredQuery = this.$query.clone()
   }
 
   /**
    * Apply preload include relations based on allowlist
    */
   protected async applyIncludes() {
-    const query = this.resolveQuery()
     const includes = this.$params.include
 
     if (!Array.isArray(includes) || includes.length === 0) {
@@ -143,7 +140,7 @@ export abstract class LucidBravo<T extends LucidModel> {
         continue
       }
 
-      void query.preload(relation as any)
+      void this.$query.preload(relation as any)
     }
   }
 
@@ -151,7 +148,6 @@ export abstract class LucidBravo<T extends LucidModel> {
    * Apply sorting based on sort[field] and sort[order] params
    */
   protected async applySorting() {
-    const query = this.resolveQuery()
     const sort = this.$params.sort
     const sortable = this.getSortable()
 
@@ -165,21 +161,17 @@ export abstract class LucidBravo<T extends LucidModel> {
     }
 
     if (field && sortable.includes(field)) {
-      void query.orderBy(field, order)
+      void this.$query.orderBy(field, order)
     }
   }
 
-  /**
-   * Apply simple limit and offset pagination
-   */
   protected async applyPagination() {
-    const query = this.resolveQuery()
     const limit = Number(this.$params.limit) || this.defaultLimit
     const page = Number(this.$params.page) || 1
     const offset = (page - 1) * limit
 
     if (limit > 0) {
-      void query.limit(limit).offset(offset)
+      void this.$query.limit(limit).offset(offset)
     }
   }
 }
