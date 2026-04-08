@@ -37,7 +37,7 @@ jobs:
       - name: Install
         run: pnpm install --no-frozen-lockfile
       - name: Release
-        run: pnpm run release -- --ci
+        run: pnpm run release -- --ci --access public
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
