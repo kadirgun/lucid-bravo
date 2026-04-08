@@ -9,7 +9,10 @@ export const bravoSchema = {
     .optional(),
   limit: vine.number().positive().max(100).optional(),
   page: vine.number().positive().optional(),
-  include: vine.array(vine.string()).optional(),
+  include: vine.union([
+    vine.union.if((val) => typeof val === 'string', vine.string()),
+    vine.union.if((val) => Array.isArray(val), vine.array(vine.string())),
+  ]),
   dimensions: vine
     .union([
       vine.union.if((val) => typeof val === 'string', vine.string()),
