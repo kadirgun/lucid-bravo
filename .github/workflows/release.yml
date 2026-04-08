@@ -25,6 +25,7 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
       - name: git config
         run: |
           git config user.name "${GITHUB_ACTOR}"
