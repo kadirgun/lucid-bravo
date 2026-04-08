@@ -346,10 +346,12 @@ export abstract class LucidBravo<T extends LucidModel> {
    * Apply preload include relations based on allowlist
    */
   protected async applyIncludes() {
-    const includes = this.$params.include
+    const includes: string[] = []
 
-    if (!Array.isArray(includes) || includes.length === 0) {
-      return
+    if (Array.isArray(this.$params.include)) {
+      includes.push(...this.$params.include)
+    } else if (typeof this.$params.include === 'string') {
+      includes.push(this.$params.include)
     }
 
     const allowed = this.getAllowedIncludes()
