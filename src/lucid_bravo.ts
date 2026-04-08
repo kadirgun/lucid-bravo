@@ -354,9 +354,11 @@ export abstract class LucidBravo<T extends LucidModel> {
       includes.push(this.$params.include)
     }
 
+    const camelCasedIncludes = includes.map((relation) => stringHelpers.camelCase(relation))
+
     const allowed = this.getAllowedIncludes()
 
-    for (const relation of includes) {
+    for (const relation of camelCasedIncludes) {
       if (!allowed.includes(relation)) {
         continue
       }
