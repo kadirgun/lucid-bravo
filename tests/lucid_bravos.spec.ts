@@ -191,7 +191,7 @@ test.group('lucid bravos', () => {
       const results = await withHttpContext(async () => {
         const bravo = new PostBravo({
           dimensions: ['category'],
-          metrics: ['count', 'avg:views'],
+          metrics: ['count', 'views:avg'],
         })
 
         return await bravo.aggregate()
@@ -264,21 +264,21 @@ test.group('lucid bravos', () => {
           title: 'Post 1',
           userId: user1.id,
           category: 'Tech',
-          metadata: JSON.stringify({ topic: 'adonis' }),
+          metadata: { topic: 'adonis' },
           views: 10,
         },
         {
           title: 'Post 2',
           userId: user1.id,
           category: 'Tech',
-          metadata: JSON.stringify({ topic: 'adonis' }),
+          metadata: { topic: 'adonis' },
           views: 20,
         },
         {
           title: 'Post 3',
           userId: user1.id,
           category: 'Health',
-          metadata: JSON.stringify({ topic: 'lucid' }),
+          metadata: { topic: 'lucid' },
           views: 30,
         },
       ])

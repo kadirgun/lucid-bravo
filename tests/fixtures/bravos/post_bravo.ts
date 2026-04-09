@@ -19,6 +19,14 @@ export default class PostBravo extends LucidBravo<ModelType> {
     return ['user']
   }
 
+  protected getAllowedDimensions(): LucidBravoAttributes<typeof Post>[] {
+    return ['metadata', 'createdAt', 'category']
+  }
+
+  protected getAllowedMetrics(): LucidBravoAttributes<typeof Post>[] {
+    return ['views', 'count']
+  }
+
   protected async title(value: string) {
     this.$query.where('title', 'like', `%${value}%`)
   }

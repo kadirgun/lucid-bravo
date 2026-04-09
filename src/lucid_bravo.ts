@@ -58,6 +58,14 @@ export abstract class LucidBravo<T extends LucidModel> {
     return []
   }
 
+  protected getAllowedDimensions(): LucidBravoAttributes<T>[] {
+    return []
+  }
+
+  protected getAllowedMetrics(): LucidBravoAttributes<T>[] {
+    return []
+  }
+
   protected getModel(): T {
     if (this.model) return this.model
     throw new Error('Model not defined')
@@ -105,11 +113,27 @@ export abstract class LucidBravo<T extends LucidModel> {
       dimensions.push(this.$params.dimensions)
     }
 
+    const allowedDimensions = this.getAllowedDimensions()
+    for (const dimension of dimensions) {
+      const dimensionName = stringHelpers.camelCase(dimension.split('->')[0].split(':')[0])
+      if (!allowedDimensions.includes(dimensionName)) {
+        throw new Error(`Dimension not allowed: ${dimensionName}`)
+      }
+    }
+
     const metrics: string[] = []
     if (Array.isArray(this.$params.metrics)) {
       metrics.push(...this.$params.metrics)
     } else if (typeof this.$params.metrics === 'string') {
       metrics.push(this.$params.metrics)
+    }
+
+    const allowedMetrics = this.getAllowedMetrics()
+    for (const metric of metrics) {
+      const metricName = stringHelpers.camelCase(metric.split('->')[0].split(':')[0])
+      if (!allowedMetrics.includes(metricName)) {
+        throw new Error(`Metric not allowed: ${metricName}`)
+      }
     }
 
     if (dimensions.length === 0 || metrics.length === 0) {
@@ -133,7 +157,7 @@ export abstract class LucidBravo<T extends LucidModel> {
         return void this.$query.count('* as total')
       }
 
-      const [func, field] = metric.split(':')
+      const [field, func] = metric.split(':')
       if (!func || !field) {
         throw new Error(`Invalid metric format: ${metric}`)
       }
